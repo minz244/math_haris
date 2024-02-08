@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplication Table Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+
+    #header-container {
+      background-color: #3498db;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    #timer {
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+
+    #result {
+      font-size: 1.2em;
+      margin-top: 10px;
+      display: none;
+    }
+
+    button {
+      padding: 10px;
+      font-size: 1em;
+      background-color: #2ecc71;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto; /* Center the button */
+      z-index: 1;
+      position: relative;
+    }
+
+    #table-container {
+      overflow-x: auto;
+      margin: 130px auto 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto; /* Adjusted property */
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      white-space: nowrap; /* Prevent line break */
+    }
+
+    th {
+      background-color: #3498db;
+      color: #fff;
+    }
+
+    .correct {
+      background-color: #2ecc71;
+      color: #fff;
+    }
+
+    .incorrect {
+      background-color: #e74c3c;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="header-container">
+    <h1 id="greeting"></h1>
+    <div id="timer"></div>
+    <div id="result"></div>
+  </div>
+
+  <button id="start-btn" onclick="startQuiz()">Start Quiz</button>
+
+  <div id="table-container"></div>
+  <button id="restart-btn" onclick="restartQuiz()" style="display: none;">Restart Quiz</button>
+
+  <script>
+    let timer;
+    let timerSeconds = 1000;
+
+    let userName = localStorage.getItem('userName');
+    if (!userName) {
+      userName = prompt('Enter your name:');
+      localStorage.setItem('userName', userName);
+    }
+
+    document.getElementById('greeting').textContent = `Hi, ${userName}! Welcome to the Multiplication Table Quiz`;
+
+    function startQuiz() {
+      document.getElementById('start-btn').style.display = 'none';
+      generateMultiplicationTable();
+      startTimer();
+    }
+
+    function generateMultiplicationTable() {
+      const tableContainer = document.getElementById('table-container');
+      tableContainer.innerHTML = '';
+
+      const table = document.createElement('table');
+      const tableHead = document.createElement('thead');
+      const tableBody = document.createElement('tbody');
+
+      const headerRow = document.createElement('tr');
+      const headerCell1 = document.createElement('th');
+      headerCell1.textContent = 'Number';
+      headerRow.appendChild(headerCell1);
+
+      const headerCell2 = document.createElement('th');
+      headerCell2.textContent = 'Your Answer';
+      headerRow.appendChild(headerCell2);
+
+      const headerCell3 = document.createElement('th');
+      headerCell3.textContent = 'Result';
+      headerRow.appendChild(headerCell3);
+
+      tableHead.appendChild(headerRow);
+
+      for (let i = 1; i <= 100; i++) {
+        const row = document.createElement('tr');
+
+        const numberCell = document.createElement('td');
+        const num1 = Math.floor(Math.random() * 11) + 2;
+        const num2 = Math.floor(Math.random() * 11) + 2;
+        numberCell.textContent = `${num1} x ${num2}`;
+        numberCell.dataset.result = num1 * num2;
+        row.appendChild(numberCell);
+
+        const answerCell = document.createElement('td');
+        const answerInput = document.createElement('input');
+        answerInput.type = 'text';
+        answerInput.dataset.result = num1 * num2;
+        answerInput.addEventListener('input', checkAnswer);
+        answerCell.appendChild(answerInput);
+        row.appendChild(answerCell);
+
+        const resultCell = document.createElement('td');
+        row.appendChild(resultCell);
+
+        tableBody.appendChild(row);
+      }
+
+      table.appendChild(tableHead);
+      table.appendChild(tableBody);
+      tableContainer.appendChild(table);
+    }
+
+    function checkAnswer(event) {
+      const userAnswer = parseInt(event.target.value);
+      const correctAnswer = parseInt(event.target.dataset.result);
+      const resultCell = event.target.parentNode.nextElementSibling;
+
+      if (!isNaN(userAnswer)) {
+        resultCell.textContent = userAnswer === correctAnswer ? 'Correct' : 'Wrong';
+        resultCell.className = userAnswer === correctAnswer ? 'correct' : 'incorrect';
+      } else {
+        resultCell.textContent = '';
+        resultCell.className = '';
+      }
+
+      calculatePercentage();
+    }
+
+    function calculatePercentage() {
+      const resultContainer = document.getElementById('result');
+      const correctCells = document.querySelectorAll('.correct').length;
+      const totalCells = document.querySelectorAll('tbody td:nth-child(2)').length;
+
+      const percentage = (correctCells / totalCells) * 100;
+
+      resultContainer.textContent = `Percentage: ${percentage.toFixed(2)}%`;
+      resultContainer.style.display = 'block';
+
+      if (percentage === 100) {
+        resultContainer.textContent = `Congratulations, ${userName}! 100%`;
+        showRestartButton();
+        clearInterval(timer);
+      }
+    }
+
+    function startTimer() {
+      const timerContainer = document.getElementById('timer');
+      timerSeconds = 1000;
+
+      function updateTimer() {
+        const minutes = Math.floor(timerSeconds / 60);
+        seconds = timerSeconds % 60;
+        timerContainer.textContent = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+      }
+
+      timer = setInterval(function () {
+        timerSeconds--;
+
+        if (timerSeconds >= 0) {
+          updateTimer();
+        } else {
+          clearInterval(timer);
+          timerContainer.textContent = 'Time\'s Up!';
+          disableAnswerInputs();
+          calculatePercentage();
+          showRestartButton();
+        }
+      }, 1000);
+    }
+
+    function disableAnswerInputs() {
+      const answerInputs = document.querySelectorAll('input');
+      answerInputs.forEach(input => input.value = ''); // Clear all answers
+      answerInputs.forEach(input => input.disabled = true);
+    }
+
+    function showRestartButton() {
+      const restartButton = document.getElementById('restart-btn');
+      restartButton.style.display = 'block';
+    }
+
+    function restartQuiz() {
+      clearInterval(timer);
+      const timerContainer = document.getElementById('timer');
+      timerContainer.textContent = '';
+
+      const resultContainer = document.getElementById('result');
+      resultContainer.textContent = '';
+      resultContainer.style.display = 'none';
+
+      const restartButton = document.getElementById('restart-btn');
+      restartButton.style.display = 'none';
+
+      // Clear all answers and reset timer
+      generateMultiplicationTable();
+      startTimer();
+
+      document.getElementById('start-btn').style.display = 'none';
+    }
+
+    document.getElementById('start-btn').style.display = 'block';
+  </script>
+</body>
+</html>
